@@ -1,0 +1,394 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Docker a gyakorlatban</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+        
+        <link rel="stylesheet" href="css/docker.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+                    <h2>Docker a gyakorlatban</h2>
+                    <p>
+						Készítette: Gazdag András / <a href="http://precogonox.hu">Precognox Kft.</a>
+					</p>
+                </section>
+                <section>
+                    <h2>Miben jobb a dokker</h2>
+                    <p>- a hagyományos megoldásoknál?</p>
+                    <ul>
+                        <li>gyors</li>
+                        <li>kisebb erőforrásigény</li>
+                        <li>jól skálázható</li>
+                        <li>rugalmas</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>A hagyományos megoldás</h2>
+                    <img src="img/kad.jpg">
+                </section>
+                <section>
+                    <h2>Dokker</h2>
+                    <img src="img/dokker.jpg">
+                </section>
+                <section>
+                    <h2>Műszaki adatok</h2>
+                    <table>
+                        <tr>
+                            <th style="min-width: 190px">típus</th>
+                            <th>bruttó űrtart.</th>
+                            <th>villanymotor</th>
+                            <th>kev.kapacitás</th>
+                        </tr>
+                        <tr><td>MLD-130<td>130 liter<td>0,42 KW<td>0,83 m3/h</tr>
+<tr><td>DOMIX-140<td>140 liter<td>0,42 KW<td>0,98 m3/h</tr>
+<tr><td>DOMIX-170<td>170 liter<td>0,75 KW<td>1,33 m3/h</tr>
+<tr><td>DOMIX-250<td>250 liter<td>0,75 KW<td>2,15 m3/h</tr>
+<tr><td>DOMIX-300<td>300 liter<td>1,10 KW<td>2,35 m3/h</tr>
+                    </table>
+                </section>
+                <section>
+                    <h2>... és most komolyan!</h2>
+                </section>
+                <section>
+                    <h2>Mit tud a Docker?</h2>
+                    <ul>
+                        <li>konténer technológia</li>
+                        <li>nem virtuális gép!</li>
+                        <li>gyors</li>
+                        <li>kis erőforrásigény</li>
+                        <li>jól skálázható</li>
+                        <li>rugalmas</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Virtualizáció vs. konténerek</h2>
+                    <img src="img/docker-vm-container.jpg">
+                </section>
+                <section>
+                    <h2>Lightweight</h2>
+                    <ul>
+                        <li>1db Linux kernel - cgroups & namespaces</li>
+                        <li>egymásra épülő layer-ek (aufs)</li>
+                        <li>image-ek, layerek megosztása (repository)</li>
+
+                    </ul>
+                </section>
+                <section>
+                    <h2>Repository - image - konténer</h2>
+                    <img src="img/repo-img-cont.png">
+                </section>
+                <section>
+                    <h2>Alapvető működés</h2>
+                    <ul>
+                        <li>konténer készítése: image-ből</li>
+                        <li>1 konténer: 1 szervíz (általában)</li>
+                        <li>valójában:<br>1 konténer 1 parancsot futtat, majd leáll!</li>
+                        <li>speciális indító scriptek</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Image-ek készítése</h2>
+                    <ul>
+                        <li>Meglévő image-ek módosításával</li>
+                        <ul>
+                            <li>futó konténerből commit</li>
+                            <li>Dockerfile & build</li>
+                        </ul>
+                        <li>Base image készítése
+                        linux disztribúcióból</li>
+                    </ul>
+                </section>
+                <section>
+                    <section>
+                    <h2>Dockerfile (rancher server)</h2>
+                    <pre>FROM alpine
+RUN apk upgrade --update && \
+    apk add curl mysql xz bash unzip openjdk7-jre-base tar unzip && \
+    curl -Ls https://circle-artifacts.com/gh/andyshinn/alpine-pkg-glibc/6/artifacts/0/home/ubuntu/alpine-pkg-glibc/packages/x86_64/glibc-2.21-r2.apk > /tmp/glibc-2.21-r2.apk && \
+    apk add --allow-untrusted /tmp/glibc-2.21-r2.apk && \
+    rm /tmp/glibc-2.21-r2.apk
+
+ENV CATTLE_HOME /var/lib/cattle
+ENV DEFAULT_CATTLE_API_UI_INDEX //releases.rancher.com/ui/0.38.0
+ENV CATTLE_DB_CATTLE_DATABASE mysql
+ADD artifacts /usr/share/cattle
+
+ADD service /service
+ENV S6_SERVICE_DIR /service
+
+COPY target/*static.tar.gz /s6-statics/
+RUN cd / && for i in $(ls /s6-statics/*static.tar.gz);do tar -zxvf $i;done
+
+VOLUME ["/var/lib/cattle"]
+VOLUME ["/var/lib/mysql"]</pre>
+                        <div style="text-align: left">tovább: &#8595;</div>
+                </section>
+                    <section>
+                        <pre>EXPOSE 8080
+ENV CATTLE_HOST_API_PROXY_MODE embedded
+ENV CATTLE_RANCHER_SERVER_IMAGE v0.31.0-rc1
+ENV CATTLE_RANCHER_COMPOSE_VERSION beta/latest
+ENV DEFAULT_CATTLE_RANCHER_COMPOSE_LINUX_URL   https://releases.rancher.com/compose/${CATTLE_RANCHER_COMPOSE_VERSION}/rancher-compose-linux-amd64.tar.gz
+ENV DEFAULT_CATTLE_RANCHER_COMPOSE_DARWIN_URL  https://releases.rancher.com/compose/${CATTLE_RANCHER_COMPOSE_VERSION}/rancher-compose-darwin-amd64.tar.gz
+ENV DEFAULT_CATTLE_RANCHER_COMPOSE_WINDOWS_URL https://releases.rancher.com/compose/${CATTLE_RANCHER_COMPOSE_VERSION}/rancher-compose-windows-386.zip
+
+EXPOSE 3306
+ENV CATTLE_CATTLE_VERSION v0.71.0
+ADD https://github.com/rancherio/cattle/releases/download/${CATTLE_CATTLE_VERSION}/cattle.jar /usr/share/cattle/
+RUN /usr/share/cattle/install_cattle_binaries
+
+ENV DEFAULT_CATTLE_MACHINE_EXECUTE true
+CMD ["/usr/bin/s6-svscan", "/service"]</pre>
+                        </section>
+                </section>
+                <section>
+                    <h2>Docker installálása</h2>
+                    <ul>
+                        <li><a href="https://docs.docker.com/engine/installation/">https://docs.docker.com/engine/installation/</a></li>
+                        <li>Linux: docker csoportba felvenni a usert<br>
+                        (hogy ne kelljen sudo-val indítani a dockert)</li>
+                    </ul>
+                </section>
+                <section>
+                <section>
+                    <h2>Egyszerű példák</h2>
+                    <ul>
+                        <li>demo:<br>
+                        <pre>docker run hello-world</pre>
+                            </li>
+                        <li>a prezentáció indítása:<br>
+                    <pre>docker run -d -p 8088:80 --name prezi gazdagandras/docker-a-gyakorlatban</pre>
+                            <small>böngészőben: <a href="http://127.0.0.1:8088">http://127.0.0.1:8088</a></small>
+                            </li>
+                        </ul>
+                </section>
+                    <section>
+                        <h2>További parancsok</h2>
+                        <pre>docker build -t sajatimage:1.0.0 .
+docker exec -ti kontenerem bash
+docker logs kontenerem
+docker logs -f kontenerem
+docker images
+docker ps
+docker ps -a
+docker rm kontenerem
+docker rmi sajatimage:2.0.1
+docker rm `docker -qa`
+docker login
+docker pull image:tag
+docker push image:tag
+...</pre>
+                    </section>
+                </section>
+                <section>
+                    <h2>docker-compose</h2>
+                    <ul>
+                        <li>1db bináris</li>
+                        <li>docker-t használja</li>
+                        <li>bonyolult konfigurációk egyszerű kezelése</li>
+                        <li>konfig file: docker-compose.yml (<a href="http://yaml.org/">http://yaml.org/</a>)</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Lássunk pár gyakorlati példát!</h2>
+                    <pre>git clone https://github.com/gazdagandras/docker-a-gyakorlatban.git
+cd docker-a-gyakorlatban</pre>
+                </section>
+                <section>
+                <section>
+                    <h2>MySQL szerver indítása</h2>
+                    <pre>docker-compose up -d database
+docker-compose ps</pre>
+                    <hr>
+                    <pre>...
+database:
+  image: mysql:5.6
+  container_name: database
+  ports:
+   - "3306:3306"
+  volumes:
+   - "./mysql:/var/lib/mysql"
+  environment:
+   - MYSQL_ROOT_PASSWORD=nagyontitkos
+   - MYSQL_DATABASE=testdb
+   - MYSQL_USER=dbuser
+   - MYSQL_PASSWORD=titkos8912
+...</pre>
+                </section>
+                    <section>
+                        <h2>Tipikus hiba: foglalt a port</h2>
+                        <pre>ERROR: driver failed programming external connectivity on endpoint database
+(a3ba0275d7559d2ac0c2de46c3830a95f3dbc7e7699309e8fe895a093f53060b):
+Error starting userland proxy: 
+listen tcp 0.0.0.0:3306: bind: address already in use</pre>
+                        <p style="text-align: left">megoldás:<br> MySQL szerver leállítása, vagy másik port választása</p>
+                    </section>
+                    <section>
+                        <h2>További parancsok</h2>
+                        <pre>docker-compose logs
+docker-compose logs -f
+docker-compose logs -f szervizem
+docker-compose up szervizem
+docker-compose up -d szervizem
+docker-compose up -d
+docker-compose stop
+docker-compose stop szervizem
+docker-compose down
+docker-compose pull</pre>
+                    </section>
+                </section>
+                <section>
+                    <h2>Egy kis magyarázat</h2>
+                    <ul>
+                        <li>database: szervíz neve</li>
+                        <li>container_name: különben mappa_neve_szerviz</li>
+                        <li>ports: port binding (host port : konténer port)</li>
+                        <li>volumes: perziszrencia (host:konténer)</li>
+                        <li>environment: környezeti változók (paraméterezés)</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Különböző php verziók</h2>
+                    <pre>docker-compose up -d phpinfo5 phpinfo7</pre>
+                    <hr>
+                    <pre>...
+phpinfo5:
+  image: php:5.6-apache
+  container_name: phpinfo5
+  ports:
+   - "8089:80"
+  volumes:
+   - "./phpinfo/index.php:/var/www/html/index.php"
+phpinfo7:
+  image: php:7.1-apache
+  container_name: phpinfo7
+  ports:
+   - "8090:80"
+  volumes:
+   - "./phpinfo/index.php:/var/www/html/index.php"
+   ...</pre>
+                </section>
+                <section>
+                    <h2>PHP oldal fejlesztése</h2>
+                    <pre>...
+phpsite_dev:
+  image: gazdagandras/php-mysql-test-site:latest
+  container_name: phpsite_dev
+  ports:
+   - "8091:80"
+  volumes:
+   - "./phpsite/src/index.php:/var/www/html/index.php"
+  links:
+   - database
+...</pre>
+                    <hr>
+                    <ul>
+                        <li>links: másik konténer összekapcsolása</li>
+                        <li>index.php módosítása azonnal látható</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>PHP + MySQL - saját image</h2>
+                    <p>Dockerfile:</p>
+                    <pre>FROM php:7.0-apache
+RUN docker-php-ext-install mysqli
+COPY src/ /var/www/html/</pre>
+                    <p>További infók: <a href="https://hub.docker.com/_/php/">https://hub.docker.com/_/php/</a></p>
+                    <pre>docker build -t gazdagandras/php-mysql-test-site:1.0.0 .
+docker push gazdagandras/php-mysql-test-site:1.0.0</pre>
+                </section>
+                <section>
+                    <h2>Production kód üzemeltetése</h2>
+                    <pre>...
+phpsite:
+  image: gazdagandras/php-mysql-test-site:1.0.0
+  container_name: phpsite
+  ports:
+   - "8092:80"
+  links:
+   - database
+...</pre>
+                    <p>Frissítés:</p>
+                    <ul>
+                        <li>tag átírása 1.1.0 -ra</li>
+                        <li><pre>docker-compose up -d phpsite</pre></li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>version 2</h2>
+                    <pre><b class="kiemelt">version: '2'
+services:</b>
+  prezi:
+    image: gazdagandras/prezi
+    container_name: prezi
+    <b class="kiemelt">networks:
+     - test</b>
+    ports:
+     - "8088:80"
+  ...
+  phpsite:
+    image: gazdagandras/php-mysql-test-site:1.0.0
+    container_name: phpsite
+    networks:
+     - test
+    ports:
+     - "8092:80"
+<b class="kiemelt">networks:
+  test:
+    driver: bridge</b></pre>
+                    <p>Nincs szükség a link: beállításra!</p>
+                </section>
+                <section>
+                    <h2>Ha a docker-compose nem elég</h2>
+                    <ul>
+                        <li>Rancher: <a href="http://rancher.com/">http://rancher.com/</a></li>
+                        <li>Amazon ECS: <a href="https://aws.amazon.com/ecs/">https://aws.amazon.com/ecs/</a> - So-so!</li>
+                        <li>...</li>
+                    </ul>
+                </section>
+                <section>
+                    <h2>Köszönöm a figyelmet!</h2>
+                    <a href="https://github.com/gazdagandras/docker-a-gyakorlatban">https://github.com/gazdagandras/docker-a-gyakorlatban</a>
+                </section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				history: true,
+
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
