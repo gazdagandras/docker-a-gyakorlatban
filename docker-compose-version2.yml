@@ -1,7 +1,7 @@
 version: '2'
 services:
   prezi:
-    image: gazdagandras/prezi
+    image: gazdagandras/docker-a-gyakorlatban
     container_name: prezi
     networks:
      - test

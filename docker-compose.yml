@@ -1,5 +1,5 @@
 prezi:
-  image: gazdagandras/prezi
+  image: gazdagandras/docker-a-gyakorlatban
   container_name: prezi
   ports:
    - "8088:80"
